@@ -86,7 +86,7 @@ with st.form("Create a new entry"):
             ftp.quit()
             
             filepath="https://sportsmetrics.geth.gr/storage/" + filename_with_extension
-            st.write(type(filename))         
+                     
             list = (fullname,email,occupy,type_of_trial,filename)
             def add_entries_to_main_table(supabase):
                 value = {'fullname': fullname, 'email': email, 'occupy': occupy, 'type_of_trial': type_of_trial,
