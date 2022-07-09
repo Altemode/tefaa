@@ -89,7 +89,7 @@ with st.expander("From here you may display and calculate results from any entry
 
 
         # In this form, you type the id of the person to calculate speicific trial.
-        with st.form("Type the ID of your link:",clear_on_submit=True):   
+        with st.form("Type the ID of your link:",clear_on_submit=False):   
                 url_id_number_input = st.number_input("Type the ID of your prerferred trial and Press Calculate Results:",value=0,step=1)
                 id_submitted = st.form_submit_button("Calculate Results")
         # Querry to find the data row of specific ID
@@ -474,7 +474,7 @@ if url_list:
     col1, col2 = st.columns(2)
     r=0  
     with st.form("Select Graph Area", clear_on_submit=True):
-        st.caption("Input these fields to calculate specific results:")
+        st.caption("Input these fields to calculate specific time period:")
         c1, c2= st.columns(2)
         with c1:        
             user_time_input_min_main_table = st.number_input("From Time", value=0, step=1 )#int(df.index.min()))
@@ -579,7 +579,8 @@ if url_list:
         #     emg_df3_length = len(emg_df3)
         #     emg_df3.loc[emg_df3_length] = to_append
         #Give Specific Results
-        with st.expander('Show Specific Calculations', expanded=True):
+        with st.expander('Show Specific Calculations' , expanded=True):
+            st.write('Time Period: from', user_time_input_min_main_table, "to ", user_time_input_max_main_table)
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                     st.write('Force-Mean:', round(df_brushed["Force"].mean(),4))
@@ -720,6 +721,7 @@ if url_list:
     ##################### ################### UN BRUSHED AREA ##################### ######################## ###################
     else:
         with st.expander("Show Specific Calculations", expanded=True):
+            st.caption("Whole Time Period")
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                     st.write('Force-Mean:', round(df["Force"].mean(),4))
