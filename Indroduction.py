@@ -5,10 +5,7 @@ st.set_page_config(
     page_icon="🧊",
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items={
-        
-        
-    }
+    
 )
 st.subheader('School of Physical Education and Sports Science')
 st.markdown("# Main page")

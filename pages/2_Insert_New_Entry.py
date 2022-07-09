@@ -14,10 +14,7 @@ st.set_page_config(
     page_icon="🧊",
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items={
-        
-        
-    }
+    
 )
 
 #Make the connection with Supabase - Database:

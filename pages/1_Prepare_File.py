@@ -5,6 +5,14 @@ import pandas as pd
  
 ############## ############## PAGE 1 PREPARE THE FILE ############# ############# ############## ##############
     
+st.set_page_config(
+    page_title="Tefaa Metrics",
+    page_icon="🧊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+   
+)
+
 st.sidebar.success("_From this section you can prepare your txt file with raw data!_")
 st.sidebar.info("- Import the file in the form!")
 st.sidebar.info("- Give the value of the platform mass.")
