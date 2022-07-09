@@ -9,7 +9,16 @@ from pathlib import Path
 
 
 ############# ############## PAGE 2 INSERT TO DATABASE USER+TRIAL ############## ############ #############################
-
+st.set_page_config(
+    page_title="Tefaa Metrics",
+    page_icon="🧊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        
+        
+    }
+)
 
 #Make the connection with Supabase - Database:
 @st.experimental_singleton

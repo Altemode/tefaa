@@ -7,8 +7,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     menu_items={
         
-        'Report a bug': "https://www.extremelycoolapp.com/bug",
-        'About': "# This is a header. This is an *extremely* cool app!"
+        
     }
 )
 st.subheader('School of Physical Education and Sports Science')

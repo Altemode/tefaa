@@ -11,7 +11,16 @@ import biosignalsnotebooks as bsnb
 import plotly.graph_objects as go
 
 ############## ############## PAGE 3 CALCULATE RESULTS ############# ############# ############## ########################
-
+st.set_page_config(
+    page_title="Tefaa Metrics",
+    page_icon="🧊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        
+        
+    }
+)
 #Make the connection with Supabase - Database:
 @st.experimental_singleton
 def init_connection():
