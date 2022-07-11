@@ -26,12 +26,14 @@ st.title('Prepare the file')
 with st.expander("Show File Form", expanded=True):
     uploaded_file = st.file_uploader("Choose a file")
 platform_mass = st.number_input("Give the platfrom mass:")
-@st.cache(allow_output_mutation=True)
+#@st.cache()
 def get_data():
     if uploaded_file:
         df_raw_data = pd.read_csv(uploaded_file, sep='\s+', skiprows=10, index_col = None)
         #Define Header columns
         columns_count = len(df_raw_data.axes[1])
+        if columns_count == 6:
+            df_raw_data.columns = ['Time', 'Col_2', 'Mass_1', 'Mass_2', 'Mass_3', 'Mass_4']
         if columns_count == 8:
             df_raw_data.columns = ['Time', 'Col_2', 'Mass_1', 'Mass_2', 'Mass_3', 'Mass_4', 'Col_7', 'Col_8']
         if columns_count == 9:
@@ -95,10 +97,13 @@ if uploaded_file:
         export = st.checkbox('Verify you have insert proper Platform Mass Value:')
 
         if export:
-            st.success("You are able to export your data.")
-            st.download_button(
-                label="Export File",
-                data=df_prepared.to_csv(index=False),
-                file_name=final_filename +'.csv',
-                mime='text/csv',
-            )
+            if 4.5 <= platform_mass <= 7.5:
+                st.success("You are able to export your data.")
+                st.download_button(
+                    label="Export File",
+                    data=df_prepared.to_csv(index=False),
+                    file_name=final_filename +'.csv',
+                    mime='text/csv',
+                )
+            else:
+                st.warning("Please give correct platform mass!")
