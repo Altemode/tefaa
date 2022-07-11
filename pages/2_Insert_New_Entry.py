@@ -72,8 +72,8 @@ with st.form("Create a new entry"):
                 return hostname,username,password
             hostname,username,password = storage_connection()
             
-            ftp = ftplib.FTP(hostname)
-            ftp.login(username,password)
+            ftp = ftplib.FTP(hostname,username,password)
+            
             
             # This is the method to take the temporary path of the uploaded file and the value in bytes of it.
             with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
@@ -105,7 +105,7 @@ with st.form("Create a new entry"):
             st.write(list)
         else:
             st.error("One of the field values is missing")
-#@st.experimental_memo(ttl=200)
+@st.experimental_memo(ttl=600)
 def select_all_from_main_table():
     query=con.table("main_table").select("*").execute()
     return query

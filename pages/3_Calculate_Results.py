@@ -34,7 +34,7 @@ url_list=[]
 with st.expander("From here you may display and calculate results from any entry of the database!", expanded=True):
     st.caption("Use the below search fields to filter the datatable!")
     #uploaded_file = st.file_uploader("Choose a file1")
-    #@st.experimental_memo(ttl=100)
+    @st.experimental_memo(ttl=600)
     def select_all_from_main_table():
         query=con.table("main_table").select("*").execute()
         return query
@@ -512,6 +512,14 @@ if url_list:
         headers_list_rfd1=[]
         # headers_list_emg1=[] # headers_list_emg2=[] # headers_list_emg3=[]
         rfd_df1=pd.DataFrame()
+
+        # The whole RFD:
+        X_all = df_brushed['Rows_Count'] - df_brushed['Rows_Count'].mean()
+        Y_all = df_brushed['Force'] - df_brushed['Force'].mean()
+        b_rfd1_whole = (X_all*Y_all).sum() / (X_all ** 2).sum()
+        
+        RFP_Total = pd.Series(b_rfd1_whole)
+
         # emg_df1=pd.DataFrame() # emg_df2=pd.DataFrame() # emg_df3=pd.DataFrame()
         for i in range(int(user_time_input_min_main_table),int(user_time_input_max_main_table),50):  
             ###### FIND RFD on selected time period ######
@@ -632,6 +640,9 @@ if url_list:
                 'RMS_3 Mean' : [df_brushed['RMS_3'].mean()],
                 'Force Mean (N)' : [df_brushed['Force'].mean()],
                 'Force Max (N)' : [max(df_brushed['Force'])],
+                'RFD Total ' + str(user_time_input_min_main_table) + '-' + str(user_time_input_max_main_table) : [b_rfd1_whole]
+                
+
                 }
         
         specific_metrics_df = pd.DataFrame(specific_metrics)
