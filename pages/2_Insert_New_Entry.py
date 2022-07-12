@@ -58,7 +58,7 @@ with st.form("Create a new entry"):
     
     if submitted:
         
-        if fullname and age and height and weight and email and occupy and type_of_trial !='-' and filepath:
+        if fullname and age and height and weight and occupy and type_of_trial !='-' and filepath:
             
             filename_with_extension = filepath.name
             # Filename without extension
