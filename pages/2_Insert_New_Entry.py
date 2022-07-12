@@ -105,7 +105,7 @@ with st.form("Create a new entry"):
             st.write(list)
         else:
             st.error("One of the field values is missing")
-@st.experimental_memo(ttl=600)
+#@st.experimental_memo(ttl=600)
 def select_all_from_main_table():
     query=con.table("main_table").select("*").execute()
     return query

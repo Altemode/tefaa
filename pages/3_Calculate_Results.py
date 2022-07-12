@@ -10,6 +10,8 @@ import altair as alt
 import biosignalsnotebooks as bsnb
 import plotly.graph_objects as go
 
+import sympy as sy
+
 ############## ############## PAGE 3 CALCULATE RESULTS ############# ############# ############## ########################
 st.set_page_config(
     page_title="Tefaa Metrics",
@@ -28,13 +30,21 @@ def init_connection():
 con = init_connection()
 
 st.title("Calculate Results")
-
+st.sidebar.info("""Some Usefull Tips:  
+• initial stationary position (FGRF = BW)  
+• unweighting phase (FGRF < BW)  
+• propulsion phase (FGRF > BW)  
+• instant of take-off (FGRF = 0 N)  
+• flight phase (FGRF = 0 N)  
+• instant of landing  
+• the landing ‘impact’ force peak  
+• final stationary position (FGRF = BW)""")
 
 url_list=[]
 with st.expander("From here you may display and calculate results from any entry of the database!", expanded=True):
     st.caption("Use the below search fields to filter the datatable!")
     #uploaded_file = st.file_uploader("Choose a file1")
-    @st.experimental_memo(ttl=600)
+    #@st.experimental_memo(ttl=600)
     def select_all_from_main_table():
         query=con.table("main_table").select("*").execute()
         return query
@@ -193,13 +203,13 @@ if url_list:
     if url_list[0]['type_of_trial'] == "CMJ":
         # Find Take Off Time: 
         for i in range (0, len(df.index)):
-            if df.loc[i,'Force'] < 5:
+            if df.loc[i,'Force'] < 2:
                 take_off_time = i
                 break
         # Find Landing Time:
         for i in range (take_off_time, len(df.index)):
-            if df.loc[i,'Force'] > 15:
-                landing_time = i
+            if df.loc[i,'Force'] > 35:
+                landing_time = i - 1
                 break
         # Find Start Try Time
         for i in range(0,take_off_time):
@@ -464,12 +474,13 @@ if url_list:
         st.caption("Helpfull information about the time-sections of the graph after the start of the trial:")
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.write(" 1st time of Force closest to whole average:", closest_to_average_force1)
+            st.write(" 1st time of Velocity closest to zero is at:", closest_to_zero_velocity)
         with c2:
-            st.write(" 1st time of Velocity closest to zero Velocity", closest_to_zero_velocity)
+            st.write(" Take Off Time is at:", closest_to_average_force1)
         with c3:
-            st.write(" 2nd time of Force closest to whole average:",closest_to_average_force2)
+            st.write(" Landing Time is at:",closest_to_average_force2)
 
+    
     
     col1, col2 = st.columns(2)
     r=0  
@@ -485,6 +496,17 @@ if url_list:
     df_brushed = df[(df.index >= user_time_input_min_main_table) & (df.index < user_time_input_max_main_table)]
     
     jump_depending_impluse = float("nan")
+    
+    # def f(x):
+    #     return df.loc[x:x,'Force']
+  
+    # x = sy.Symbol("x")
+    # print(sy.integrate(f(x), (x, 2061, 2364)))
+
+    # xi = np
+    
+    #vertical_take_off_velocity = st.number_input("Give the time of vertical take off velocity")
+    #jump_depending_take_off_velocity = (df.loc[vertical_take_off_velocity, 'Velocity'] ** 2) / (2 * 9.81)
 
     ######### ###### ######### ######## BRUSHED AREA ########### ########## ###########
     if brushed_submitted:
@@ -502,7 +524,7 @@ if url_list:
             velocity_momentum1 = (impulse_grf - impulse_bw) / pm
             # Find the Jump:
             jump_depending_impluse = (velocity_momentum1 ** 2) / (9.81 * 2)
-
+            
         #Find the RFD linear igression
         l_rfd1=[] 
         # l_emg1=[] # l_emg2=[] # l_emg3=[]
@@ -632,9 +654,7 @@ if url_list:
                 'Type of try' : url_list[0]['type_of_trial'],
                 'Filename' : url_list[0]['filename'],
                 'Body Mass (kg)': [pm],
-
                 'Jump (m/s)' : [jump_depending_impluse],
-
                 'RMS_1 Mean' : [df_brushed['RMS_1'].mean()],
                 'RMS_2 Mean' : [df_brushed['RMS_2'].mean()],
                 'RMS_3 Mean' : [df_brushed['RMS_3'].mean()],
@@ -760,6 +780,7 @@ if url_list:
                 mime='text/csv',
             )
     #Values Sidebar
+    
     with st.sidebar.expander(("Values"), expanded=True):
         st.write('**Name**:', url_list[0]['fullname'])
         st.write('**Age**:', url_list[0]['age'])
