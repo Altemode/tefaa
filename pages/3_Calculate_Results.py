@@ -30,15 +30,15 @@ def init_connection():
 con = init_connection()
 
 st.title("Calculate Results")
-st.sidebar.info("""Some Usefull Tips:  
-• initial stationary position (FGRF = BW)  
-• unweighting phase (FGRF < BW)  
-• propulsion phase (FGRF > BW)  
-• instant of take-off (FGRF = 0 N)  
-• flight phase (FGRF = 0 N)  
-• instant of landing  
-• the landing ‘impact’ force peak  
-• final stationary position (FGRF = BW)""")
+# st.sidebar.info("""Some Usefull Tips:  
+# • initial stationary position (FGRF = BW)  
+# • unweighting phase (FGRF < BW)  
+# • propulsion phase (FGRF > BW)  
+# • instant of take-off (FGRF = 0 N)  
+# • flight phase (FGRF = 0 N)  
+# • instant of landing  
+# • the landing ‘impact’ force peak  
+# • final stationary position (FGRF = BW)""")
 
 url_list=[]
 with st.expander("From here you may display and calculate results from any entry of the database!", expanded=True):
@@ -99,8 +99,9 @@ with st.expander("From here you may display and calculate results from any entry
 
 
         # In this form, you type the id of the person to calculate speicific trial.
+        
         with st.form("Type the ID of your link:",clear_on_submit=False):   
-                url_id_number_input = st.number_input("Type the ID of your prerferred trial and Press Calculate Results:",value=0,step=1)
+                url_id_number_input = st.number_input("Type the ID of your prerferred trial and Press Calculate Results:",value = 0,step= 1)
                 id_submitted = st.form_submit_button("Calculate Results")
         # Querry to find the data row of specific ID
         if url_id_number_input:
@@ -208,7 +209,7 @@ if url_list:
                 break
         # Find Landing Time:
         for i in range (take_off_time, len(df.index)):
-            if df.loc[i,'Force'] > 35:
+            if df.loc[i,'Force'] > 55:
                 landing_time = i - 1
                 break
         # Find Start Try Time
@@ -217,8 +218,8 @@ if url_list:
                 start_try_time = i
                 break
         closest_to_zero_velocity = df.loc[start_try_time:take_off_time,'Velocity'].sub(0).abs().idxmin()
-        closest_to_average_force1 = (df.loc[start_try_time:closest_to_zero_velocity,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
-        closest_to_average_force2 = (df.loc[closest_to_zero_velocity:take_off_time,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
+        closest_to_average_force_1st = (df.loc[start_try_time:closest_to_zero_velocity,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
+        closest_to_average_force_2nd = (df.loc[closest_to_zero_velocity:take_off_time,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
     
     with st.expander(("Graph"), expanded=True):
         #### CREATE THE MAIN CHART #####
@@ -471,16 +472,15 @@ if url_list:
 
     ###### ##### ##### Calculate the times for periods for the CMJ Trial: ##### ###### ######
     if url_list[0]['type_of_trial'] == 'CMJ':
-        st.caption("Helpfull information about the time-sections of the graph after the start of the trial:")
+        st.caption("Helpfull information about the times of the graph after the start of the CMJ trial:")
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.write(" 1st time of Velocity closest to zero is at:", closest_to_zero_velocity)
+            st.write(" Velocity closest to zero is at:", closest_to_zero_velocity)
         with c2:
-            st.write(" Take Off Time is at:", closest_to_average_force1)
+            st.write(" Take Off Time is at:", take_off_time)
         with c3:
-            st.write(" Landing Time is at:",closest_to_average_force2)
+            st.write(" Landing Time is at:", landing_time)
 
-    
     
     col1, col2 = st.columns(2)
     r=0  
@@ -497,16 +497,10 @@ if url_list:
     
     jump_depending_impluse = float("nan")
     
-    # def f(x):
-    #     return df.loc[x:x,'Force']
-  
-    # x = sy.Symbol("x")
-    # print(sy.integrate(f(x), (x, 2061, 2364)))
 
-    # xi = np
-    
     #vertical_take_off_velocity = st.number_input("Give the time of vertical take off velocity")
-    #jump_depending_take_off_velocity = (df.loc[vertical_take_off_velocity, 'Velocity'] ** 2) / (2 * 9.81)
+    jump_depending_take_off_velocity = (df.loc[take_off_time, 'Velocity'] ** 2) / (2 * 9.81)
+    jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
 
     ######### ###### ######### ######## BRUSHED AREA ########### ########## ###########
     if brushed_submitted:
@@ -524,6 +518,8 @@ if url_list:
             velocity_momentum1 = (impulse_grf - impulse_bw) / pm
             # Find the Jump:
             jump_depending_impluse = (velocity_momentum1 ** 2) / (9.81 * 2)
+
+            rsi = jump_depending_impluse / impulse_bw_duration
             
         #Find the RFD linear igression
         l_rfd1=[] 
@@ -627,8 +623,9 @@ if url_list:
                         st.write('Net Impulse:', round(impulse_grf - impulse_bw,4))
                         #st.write('velocity_momentum:', round(velocity_momentum1,2))
                 with col4:
-                        st.write('Jump (Impluse):', jump_depending_impluse)
-                        st.write('RSI:', round(jump_depending_impluse/(user_time_input_max_main_table-user_time_input_min_main_table),4))
+                        st.write('Jump (Impluse):', round(jump_depending_impluse,4))
+                        st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
+                        st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4), ', RSI:', round(rsi,4))
                         
             #output = my_formatter.format(pi)
 
@@ -655,6 +652,8 @@ if url_list:
                 'Filename' : url_list[0]['filename'],
                 'Body Mass (kg)': [pm],
                 'Jump (m/s)' : [jump_depending_impluse],
+                'RSI' : [rsi],
+
                 'RMS_1 Mean' : [df_brushed['RMS_1'].mean()],
                 'RMS_2 Mean' : [df_brushed['RMS_2'].mean()],
                 'RMS_3 Mean' : [df_brushed['RMS_3'].mean()],
@@ -781,7 +780,7 @@ if url_list:
             )
     #Values Sidebar
     
-    with st.sidebar.expander(("Values"), expanded=True):
+    with st.sidebar.expander(("Information about the Trial"), expanded=True):
         st.write('**Name**:', url_list[0]['fullname'])
         st.write('**Age**:', url_list[0]['age'])
         st.write('**Height**:', url_list[0]['height'])
