@@ -518,8 +518,8 @@ if url_list:
             velocity_momentum1 = (impulse_grf - impulse_bw) / pm
             # Find the Jump:
             jump_depending_impluse = (velocity_momentum1 ** 2) / (9.81 * 2)
-
-            rsi = jump_depending_impluse / impulse_bw_duration
+            rsi_duration = (take_off_time - start_try_time) / 1000
+            rsi = jump_depending_impluse / rsi_duration
             
         #Find the RFD linear igression
         l_rfd1=[] 
@@ -652,7 +652,7 @@ if url_list:
                 'Filename' : url_list[0]['filename'],
                 'Body Mass (kg)': [pm],
                 'Jump (m/s)' : [jump_depending_impluse],
-                'RSI' : [rsi],
+                'RSI m/s' : [rsi],
 
                 'RMS_1 Mean' : [df_brushed['RMS_1'].mean()],
                 'RMS_2 Mean' : [df_brushed['RMS_2'].mean()],
