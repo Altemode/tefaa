@@ -147,11 +147,18 @@ def get_data():
         # Calculate The Column Force
         df['Force'] = df['Mass_Sum'] * 9.81
         # Calculate Acceleration
-        #if url_list[0]['type_of_trial'] == "CMJ":
-        df['Acceleration'] = (df['Force'] / pm) - 9.81
-        # Calculate Velocity
-        df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
-        df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
+        if url_list[0]['type_of_trial'] == "DJ":
+            for i in range(len(df.index)):
+                if df.loc[i,'Force'] > 5:
+                    contact_time_1st = i
+                    break
+
+            for i in range(contact_time_1st,len(df.index)):
+                df.loc[i,'Acceleration'] = (df.loc[i,'Force'] / pm) - 9.81
+                # Calculate Velocity
+                df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
+                df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
+
 
         low_cutoff = 10 # Hz
         high_cutoff = 450 # Hz
@@ -501,6 +508,21 @@ if url_list:
         #vertical_take_off_velocity = st.number_input("Give the time of vertical take off velocity")
         jump_depending_take_off_velocity = (df.loc[take_off_time, 'Velocity'] ** 2) / (2 * 9.81)
         jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
+    
+    if url_list[0]['type_of_trial'] == "DJ":
+        for i in range(len(df.index)):
+            if df.loc[i,'Force'] > 3:
+                contact_time_1st = i
+                break
+        for i in range(len(df.index)):
+            if df.loc[i,'Force'] < 5:
+                take_off_time = i
+                break
+        
+        jump_depending_time_in_air = (1 / 2) * 9.81 * (((take_off_time - contact_time_1st) / 1000 ) / 2 ) ** 2 
+        rsi = jump_depending_time_in_air / ((take_off_time - contact_time_1st) / 1000 )
+
+
 
     ######### ###### ######### ######## BRUSHED AREA ########### ########## ###########
     if brushed_submitted:
@@ -623,6 +645,11 @@ if url_list:
                         st.write('Net Impulse:', round(impulse_grf - impulse_bw,4))
                         #st.write('velocity_momentum:', round(velocity_momentum1,2))
                 with col4:
+                        st.write('Jump (Impluse):', round(jump_depending_impluse,4))
+                        st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
+                        st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4), ', RSI-mod:', round(rsi,4))
+            if url_list[0]['type_of_trial'] == "DJ":
+                with col3:
                         st.write('Jump (Impluse):', round(jump_depending_impluse,4))
                         st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
                         st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4), ', RSI:', round(rsi,4))
