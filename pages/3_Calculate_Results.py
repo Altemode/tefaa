@@ -30,6 +30,8 @@ def init_connection():
 con = init_connection()
 
 st.title("Calculate Results")
+
+
 # st.sidebar.info("""Some Usefull Tips:  
 # • initial stationary position (FGRF = BW)  
 # • unweighting phase (FGRF < BW)  
@@ -101,8 +103,8 @@ with st.expander("From here you may display and calculate results from any entry
         # In this form, you type the id of the person to calculate speicific trial.
         
         with st.form("Type the ID of your link:",clear_on_submit=False):   
-                url_id_number_input = st.number_input("Type the ID of your prerferred trial and Press Calculate Results:",value = 0,step= 1)
-                id_submitted = st.form_submit_button("Calculate Results")
+            url_id_number_input = st.number_input("Type the ID of your prerferred trial and Press Calculate Results:",value = 0,step= 1)
+            id_submitted = st.form_submit_button("Calculate Results")
         # Querry to find the data row of specific ID
         if url_id_number_input:
             def select_filepath_from_specific_id():
@@ -147,6 +149,11 @@ def get_data():
         # Calculate The Column Force
         df['Force'] = df['Mass_Sum'] * 9.81
         # Calculate Acceleration
+        if url_list[0]['type_of_trial'] == "CMJ":
+            df['Acceleration'] = (df['Force'] / pm) - 9.81
+            df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
+            df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
+            
         if url_list[0]['type_of_trial'] == "DJ":
             for i in range(len(df.index)):
                 if df.loc[i,'Force'] > 5:
@@ -226,7 +233,22 @@ if url_list:
                 break
         closest_to_zero_velocity = df.loc[start_try_time:take_off_time,'Velocity'].sub(0).abs().idxmin()
         closest_to_average_force_1st = (df.loc[start_try_time:closest_to_zero_velocity,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
-        closest_to_average_force_2nd = (df.loc[closest_to_zero_velocity:take_off_time,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
+        #closest_to_average_force_2nd = (df.loc[closest_to_zero_velocity:take_off_time,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
+    
+    ####### ###### #####THESE BLOCK IS ONLY FOR DJ TRIAL ####### ######### #######
+    if url_list[0]['type_of_trial'] == "DJ":
+        for i in range(len(df.index)):
+            if df.loc[i,'Force'] > 3:
+                contact_time_1st = i
+                break
+        for i in range(contact_time_1st,len(df.index)):
+            if df.loc[i,'Force'] < 5:
+                take_off_time = i
+                break
+        for i in range(take_off_time,len(df.index)):
+            if df.loc[i,'Force'] > 25:
+                landing_time = i
+                break
     
     with st.expander(("Graph"), expanded=True):
         #### CREATE THE MAIN CHART #####
@@ -426,55 +448,6 @@ if url_list:
         # This is to hide by default some line
         fig.for_each_trace(lambda trace: trace.update(visible="legendonly") 
                         if trace.name in lines_to_hide else ())
-
-        #def customAnnotations(df, anno_start_try_time, anno_take_off_time, yVal):
-        # xStart = '2020-08-04'
-        # xEnd = '2020-08-06'
-        # xVal='date'
-        # yVal='regression_sales'
-        
-            #fig = go.Figure(data=go.Scatter(x=df['Rows_Count'], y=df[yVal].values, marker_color='black'))
-            #per_start = df[df.index==xStart]
-            #per_end = df[df.index==xEnd]
-
-            # fig.add_annotation(dict(font=dict(color='rgba(0,0,200,0.8)',size=12),
-            #                                     x=closest_to_zero_velocity,
-            #                                     #x = xStart
-            #                                     y=df.loc[closest_to_zero_velocity,'Force'],
-            #                                     showarrow=True,
-            #                                     text="Velocity to Zero",
-            #                                     textangle=0,
-            #                                     xanchor='right',
-            #                                     xref="x",
-            #                                     yref="y"))
-
-            # fig.add_annotation(dict(font=dict(color='rgba(0,0,200,0.8)',size=12),
-            #                                     x=closest_to_average_force2,
-                                                
-            #                                     #x = xStart
-            #                                     y=df.loc[closest_to_average_force2,'Force'],
-            #                                     showarrow=True,
-            #                                     text="Force to Average",
-            #                                     textangle=0,
-            #                                     xanchor='right',
-            #                                     xref="x",
-            #                                     yref="y"))
-
-            # fig.add_annotation(dict(font=dict(color='rgba(0,0,200,0.8)',size=12),
-            #                                     x=per_end.index[0],
-            #                                     #x = xStart
-            #                                     y=per_end[yVal].iloc[0],
-            #                                     showarrow=False,
-            #                                     text='Period end = ' + per_end.index[0] + '  ',
-            #                                     #ax = -10,
-            #                                     textangle=0,
-            #                                     xanchor='right',
-            #                                     xref="x",
-            #                                     yref="y"))
-            
-           # fig.show()
-            
-        #customAnnotations(df=df, anno_start_try_time = start_try_time, anno_take_off_time = take_off_time,  yVal='Velocity')
         st.plotly_chart(fig,use_container_width=True)
 
     ###### ##### ##### Calculate the times for periods for the CMJ Trial: ##### ###### ######
@@ -487,39 +460,52 @@ if url_list:
             st.write(" Take Off Time is at:", take_off_time)
         with c3:
             st.write(" Landing Time is at:", landing_time)
+    
+    ###### ##### ##### Calculate the times for periods for the DJ Trial: ##### ###### ######
+    if url_list[0]['type_of_trial'] == 'DJ':
+        st.caption("Helpfull information about the times of the graph after the start of the DJ trial:")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.write(" Contact phase is at:", contact_time_1st)
+        with c2:
+            st.write(" Take Off Time is at:", take_off_time)
+        with c3:
+            st.write(" Landing Time is at:", landing_time)
 
     
     col1, col2 = st.columns(2)
     r=0  
-    with st.form("Select Graph Area", clear_on_submit=True):
+    
+    with st.form("Select Graph Area", clear_on_submit=False):
         st.caption("Input these fields to calculate specific time period:")
-        c1, c2= st.columns(2)
+        c1, c2, c3, c4, c5= st.columns(5)
         with c1:        
             user_time_input_min_main_table = st.number_input("From Time", value=0, step=1 )#int(df.index.min()))
         with c2:
             user_time_input_max_main_table = st.number_input("Till Time", value=0, step=1 )#int(df.index.max()))
+        with c3:
+            rms_1_iso = st.number_input("ISO RMS 1")
+        with c4:
+            rms_2_iso = st.number_input("ISO RMS 2")
+        with c5:
+            rms_3_iso = st.number_input("ISO RMS 3")
+
         brushed_submitted = st.form_submit_button("Calculate results", help="this is hover")
+    
         
     df_brushed = df[(df.index >= user_time_input_min_main_table) & (df.index < user_time_input_max_main_table)]
     
     jump_depending_impluse = float("nan")
-    
+
+    # Find the Jump depending on time in Air and on Take Off Velocity for CMJ Trial:
     if url_list[0]['type_of_trial'] == "CMJ":
         #vertical_take_off_velocity = st.number_input("Give the time of vertical take off velocity")
         jump_depending_take_off_velocity = (df.loc[take_off_time, 'Velocity'] ** 2) / (2 * 9.81)
         jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
     
+    # Find the Jump depending on time in Air for DJ Trial:
     if url_list[0]['type_of_trial'] == "DJ":
-        for i in range(len(df.index)):
-            if df.loc[i,'Force'] > 3:
-                contact_time_1st = i
-                break
-        for i in range(len(df.index)):
-            if df.loc[i,'Force'] < 5:
-                take_off_time = i
-                break
-        
-        jump_depending_time_in_air = (1 / 2) * 9.81 * (((take_off_time - contact_time_1st) / 1000 ) / 2 ) ** 2 
+        jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
         rsi = jump_depending_time_in_air / ((take_off_time - contact_time_1st) / 1000 )
 
 
@@ -627,6 +613,9 @@ if url_list:
         #     emg_df3_length = len(emg_df3)
         #     emg_df3.loc[emg_df3_length] = to_append
         #Give Specific Results
+        rms_1_normalized = float("nan")
+        rms_2_normalized = float("nan")
+        rms_3_normalized = float("nan")
         with st.expander('Show Specific Calculations' , expanded=True):
             st.write('Time Period: from', user_time_input_min_main_table, "to ", user_time_input_max_main_table)
             col1, col2, col3, col4 = st.columns(4)
@@ -634,27 +623,33 @@ if url_list:
                     st.write('Force-Mean:', round(df_brushed["Force"].mean(),4))
                     st.write('Force-Min:', round(min(df_brushed['Force']),4))
                     st.write('Force-Max:', round(max(df_brushed['Force']),4))
-            with col2:
+            with col3:
                     st.write('RMS_1-Mean:', round(df_brushed["RMS_1"].mean(),4))
                     st.write('RMS_2-Mean:', round(df_brushed['RMS_2'].mean(),4))
                     st.write('RMS_3-Mean:', round(df_brushed['RMS_3'].mean(),4))
-            if url_list[0]['type_of_trial'] == "CMJ":
-                with col3:
-                        st.write('Impulse GRF:', round(impulse_grf,4))
-                        st.write('Impulse BW:', round(impulse_bw,4))
-                        st.write('Net Impulse:', round(impulse_grf - impulse_bw,4))
-                        #st.write('velocity_momentum:', round(velocity_momentum1,2))
+            if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "DJ":
                 with col4:
+                        if rms_1_iso:
+                            rms_1_normalized = df_brushed["RMS_1"].mean() / rms_1_iso
+                            st.write("RMS 1 Norm:", round(rms_1_normalized,4))
+                        if rms_2_iso:
+                            rms_2_normalized = df_brushed["RMS_2"].mean() / rms_2_iso
+                            st.write("RMS 1 Norm:", round(rms_2_normalized,4))
+                        if rms_3_iso:
+                            rms_3_normalized = df_brushed["RMS_3"].mean() / rms_3_iso
+                            st.write("RMS 1 Norm:", round(rms_3_normalized,4))          
+            if url_list[0]['type_of_trial'] == "CMJ":
+                with col2:
                         st.write('Jump (Impluse):', round(jump_depending_impluse,4))
                         st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
                         st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4), ', RSI-mod:', round(rsi,4))
             if url_list[0]['type_of_trial'] == "DJ":
-                with col3:
-                        st.write('Jump (Impluse):', round(jump_depending_impluse,4))
-                        st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
-                        st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4), ', RSI:', round(rsi,4))
+                with col2:
+                        #st.write('Jump (Impluse):', round(jump_depending_impluse,4))
+                        #st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
+                        st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4))
+                        st.write('RSI:', round(rsi,4))
                         
-            #output = my_formatter.format(pi)
 
         
         #Display Dataframe in Datatable
@@ -670,6 +665,7 @@ if url_list:
                 mime='text/csv',
             )
 
+        
         st.write('Export All Metrics')
         specific_metrics = [""]
         specific_metrics = {#'Unit': ['results'],
@@ -680,10 +676,12 @@ if url_list:
                 'Body Mass (kg)': [pm],
                 'Jump (m/s)' : [jump_depending_impluse],
                 'RSI m/s' : [rsi],
-
-                'RMS_1 Mean' : [df_brushed['RMS_1'].mean()],
-                'RMS_2 Mean' : [df_brushed['RMS_2'].mean()],
-                'RMS_3 Mean' : [df_brushed['RMS_3'].mean()],
+                'RMS 1 Mean' : [df_brushed['RMS_1'].mean()],
+                'RMS 1 Norm' : [rms_1_normalized],
+                'RMS 2 Mean' : [df_brushed['RMS_2'].mean()],
+                'RMS 2 Norm' : [rms_2_normalized] if rms_2_normalized is not None else {},
+                'RMS 3 Mean' : [df_brushed['RMS_3'].mean()],
+                'RMS 3 Norm' : [rms_3_normalized] if rms_3_normalized is not None else {},
                 'Force Mean (N)' : [df_brushed['Force'].mean()],
                 'Force Max (N)' : [max(df_brushed['Force'])],
                 'RFD Total ' + str(user_time_input_min_main_table) + '-' + str(user_time_input_max_main_table) : [b_rfd1_whole]
