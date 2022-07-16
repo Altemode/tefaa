@@ -673,7 +673,7 @@ if url_list:
                 'Occupy' : url_list[0]['occupy'],
                 'Type of try' : url_list[0]['type_of_trial'],
                 'Filename' : url_list[0]['filename'],
-                'Body Mass (kg)': [pm],
+                'Body Mass (kg)': url_list[0]['weight'],
                 'Jump (m/s)' : [jump_depending_impluse],
                 'RSI m/s' : [rsi],
                 'RMS 1 Mean' : [df_brushed['RMS_1'].mean()],
