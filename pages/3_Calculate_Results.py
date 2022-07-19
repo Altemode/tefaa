@@ -179,7 +179,7 @@ def get_data():
 if url_list:
     df = get_data()
 
-    ####### ###### ##### TIMES FOR CMJ TRIAL ####### ######### #######
+    ####### ###### ##### FIND TIMES FOR CMJ TRIAL ####### ######### #######
     if url_list[0]['type_of_trial'] == "CMJ":
         # Find Take Off Time: 
         for i in range (0, len(df.index)):
@@ -199,7 +199,7 @@ if url_list:
         closest_to_zero_velocity = df.loc[start_try_time:take_off_time,'Velocity'].sub(0).abs().idxmin()
         closest_to_average_force_1st = (df.loc[start_try_time:closest_to_zero_velocity,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
    
-    ####### ###### ##### TIMES FOR SJ TRIAL ####### ######### #######
+    ####### ###### ##### FIND TIMES FOR SJ TRIAL ####### ######### #######
     if url_list[0]['type_of_trial'] == "SJ":
         for i in range (0, len(df.index)):
             if df.loc[i,'Force'] < 2:
@@ -211,25 +211,25 @@ if url_list:
                 landing_time = i - 1
                 break
         for i in range(0,take_off_time):
-            if df.loc[i,'Force'] > (df.loc[10,'Force'] + 10):
+            if df.loc[i,'Force'] > (df.loc[10,'Force'] + 30):
                 start_try_time = i
                 break
 
-    ####### ###### ##### TIMES FOR DJ TRIAL ####### ######### #######
+    ####### ###### ##### FIND TIMES FOR DJ TRIAL ####### ######### #######
     if url_list[0]['type_of_trial'] == "DJ":
         for i in range(len(df.index)):
             if df.loc[i,'Force'] > 3:
-                contact_time_1st = i
+                start_try_time = i
                 break
-        for i in range(contact_time_1st,len(df.index)):
+        for i in range(start_try_time,len(df.index)):
             if df.loc[i,'Force'] < 5:
                 take_off_time = i
                 break
         for i in range(take_off_time,len(df.index)):
-            if df.loc[i,'Force'] > 25:
+            if df.loc[i,'Force'] > 35:
                 landing_time = i
                 break
-        df.loc[contact_time_1st:len(df.index):1, 'Acceleration'] = (df.loc[contact_time_1st:len(df.index):1, 'Force'] / url_list[0]['weight']) - 9.81
+        df.loc[start_try_time:len(df.index):1, 'Acceleration'] = (df.loc[start_try_time:len(df.index):1, 'Force'] / url_list[0]['weight']) - 9.81
         df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
         df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
     
@@ -439,10 +439,8 @@ if url_list:
     with c1:
         if url_list[0]['type_of_trial'] == 'CMJ':
             st.write(" Velocity closest to zero is at:", closest_to_zero_velocity)
-        if url_list[0]['type_of_trial'] == "SJ":
-            st.write("SJ trial starts at:", start_try_time)
-        if url_list[0]['type_of_trial'] == "DJ":
-            st.write(" Contact phase is at:", contact_time_1st)
+        if url_list[0]['type_of_trial'] == "SJ" or url_list[0]['type_of_trial'] == "DJ":
+            st.write("The trial starts at:", start_try_time)
     with c2:
         st.write(" Take Off Time is at:", take_off_time)
     with c3:
@@ -469,23 +467,22 @@ if url_list:
     df_brushed = df[(df.index >= user_time_input_min_main_table) & (df.index < user_time_input_max_main_table)]
     jump_depending_impluse = float("nan")
 
-    # Find the Jump depending on time in Air and on Take Off Velocity for CMJ Trial:
-    if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
+    # Find the Jump depending on time in Air and on Take Off Velocity for CMJ & SJ Trial:
+    #if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
         #vertical_take_off_velocity = st.number_input("Give the time of vertical take off velocity")
-        jump_depending_take_off_velocity = (df.loc[take_off_time, 'Velocity'] ** 2) / (2 * 9.81)
-        jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
+    jump_depending_take_off_velocity = (df.loc[take_off_time, 'Velocity'] ** 2) / (2 * 9.81)
+    jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
     
     # Find the Jump depending on time in Air for DJ Trial:
     if url_list[0]['type_of_trial'] == "DJ":
-        jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
-        rsi = jump_depending_time_in_air / ((take_off_time - contact_time_1st) / 1000 )
+        rsi = jump_depending_time_in_air / ((take_off_time - start_try_time) / 1000 )
 
     ######### ###### ######### ######## BRUSHED AREA ########### ########## ###########
     if brushed_submitted:
         df_brushed = df[(df.index >= user_time_input_min_main_table) & (df.index <= user_time_input_max_main_table)]
 
+        ######### ######## ########## FIND JUMP DEPENDING ON IMPLUSE FOR CMJ, SJ ############ ########### ############
         if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
-            ######### ######## ########## JUMP METHOD | ONLY FOR CMJ TRIAL ############ ########### ############
             #Find the Impluse GRF:
             df_brushed['Impulse_grf'] = df_brushed['Force'] * (1/1000)
             impulse_grf = df_brushed['Impulse_grf'].sum()
@@ -499,7 +496,7 @@ if url_list:
             rsi_duration = (take_off_time - start_try_time) / 1000
             rsi = jump_depending_impluse / rsi_duration
             
-        #Find the RFD linear igression
+        ##### #### #### ##### FIND THE RFD linear igression ##### #### #### #### #####
         l_rfd1=[] 
         # l_emg1=[] # l_emg2=[] # l_emg3=[]
         b_rfd1=[]
@@ -527,15 +524,12 @@ if url_list:
             
             #FIND R-EMG
             # X = df_brushed.loc[user_time_input_min_main_table:i:1,'Rows_Count'] - df_brushed.loc[user_time_input_min_main_table:i:1,'Rows_Count'].mean()
-
             # Y1 = df_brushed.loc[user_time_input_min_main_table:i:1,'pre_pro_signal_EMG_1'] - df_brushed.loc[user_time_input_min_main_table:i:1,'pre_pro_signal_EMG_1'].mean()
             # Y2 = df_brushed.loc[user_time_input_min_main_table:i:1,'pre_pro_signal_EMG_2'] - df_brushed.loc[user_time_input_min_main_table:i:1,'pre_pro_signal_EMG_2'].mean()
             # Y3 = df_brushed.loc[user_time_input_min_main_table:i:1,'pre_pro_signal_EMG_3'] - df_brushed.loc[user_time_input_min_main_table:i:1,'pre_pro_signal_EMG_3'].mean()
-
             # b_emg1 = (X*Y1).sum() / (X ** 2).sum()
             # b_emg2 = (X*Y2).sum() / (X ** 2).sum()
             # b_emg3 = (X*Y3).sum() / (X ** 2).sum()
-
             # headers_list_emg1.append("EMG_1-"+str(i))
             # headers_list_emg2.append("EMG_2-"+str(i))
             # headers_list_emg3.append("EMG_3-"+str(i))
@@ -582,7 +576,9 @@ if url_list:
         #     to_append = emg_df3
         #     emg_df3_length = len(emg_df3)
         #     emg_df3.loc[emg_df3_length] = to_append
-        #Give Specific Results
+
+
+        ############ ########### DIPLAY SPECIFIC CALCULATIONS ON BRUSHED AREA CMS , SJ , DJ ######## ######### ############
         rms_1_normalized = float("nan")
         rms_2_normalized = float("nan")
         rms_3_normalized = float("nan")
@@ -597,26 +593,26 @@ if url_list:
                     st.write('RMS_1-Mean:', round(df_brushed["RMS_1"].mean(),4))
                     st.write('RMS_2-Mean:', round(df_brushed['RMS_2'].mean(),4))
                     st.write('RMS_3-Mean:', round(df_brushed['RMS_3'].mean(),4))
-            if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "DJ" or url_list[0]['type_of_trial'] == "SJ":
-                with col4:
-                        if rms_1_iso:
-                            rms_1_normalized = df_brushed["RMS_1"].mean() / rms_1_iso
-                            st.write("RMS 1 Norm:", round(rms_1_normalized,4))
-                        if rms_2_iso:
-                            rms_2_normalized = df_brushed["RMS_2"].mean() / rms_2_iso
-                            st.write("RMS 1 Norm:", round(rms_2_normalized,4))
-                        if rms_3_iso:
-                            rms_3_normalized = df_brushed["RMS_3"].mean() / rms_3_iso
-                            st.write("RMS 1 Norm:", round(rms_3_normalized,4))          
+            #if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "DJ" or url_list[0]['type_of_trial'] == "SJ":
+            with col4:
+                    if rms_1_iso:
+                        rms_1_normalized = df_brushed["RMS_1"].mean() / rms_1_iso
+                        st.write("RMS 1 Norm:", round(rms_1_normalized,4))
+                    if rms_2_iso:
+                        rms_2_normalized = df_brushed["RMS_2"].mean() / rms_2_iso
+                        st.write("RMS 2 Norm:", round(rms_2_normalized,4))
+                    if rms_3_iso:
+                        rms_3_normalized = df_brushed["RMS_3"].mean() / rms_3_iso
+                        st.write("RMS 3 Norm:", round(rms_3_normalized,4))          
             if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
                 with col2:
                         st.write('Jump (Impluse):', round(jump_depending_impluse,4))
-                        st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
-                        st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4), ', RSI-mod:', round(rsi,4))
+                        st.write('Jump (Take Off Velocity):', round(jump_depending_take_off_velocity,4))
+                        st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4))
+                        st.write("RSI-mod", round(rsi,4))
             if url_list[0]['type_of_trial'] == "DJ":
                 with col2:
-                        #st.write('Jump (Impluse):', round(jump_depending_impluse,4))
-                        #st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
+                        st.write('Jump (Take Off Velocity):', round(jump_depending_take_off_velocity,4))
                         st.write('Jump (Time in Air):', round(jump_depending_time_in_air,4))
                         st.write('RSI:', round(rsi,4))
                         
@@ -635,7 +631,6 @@ if url_list:
                 mime='text/csv',
             )
 
-        
         st.write('Export All Metrics')
         specific_metrics = [""]
         specific_metrics = {#'Unit': ['results'],
@@ -655,8 +650,6 @@ if url_list:
                 'Force Mean (N)' : [df_brushed['Force'].mean()],
                 'Force Max (N)' : [max(df_brushed['Force'])],
                 'RFD Total ' + str(user_time_input_min_main_table) + '-' + str(user_time_input_max_main_table) : [b_rfd1_whole]
-                
-
                 }
         
         specific_metrics_df = pd.DataFrame(specific_metrics)
@@ -664,11 +657,7 @@ if url_list:
         final_results_df = pd.concat([specific_metrics_df, rfd_df1], axis=1, join='inner')
         #final_results_df['Body Mass (kg)'] = final_results_df['Body Mass (kg)'].round(decimals = 2)
         final_results_df =np.round(final_results_df, decimals = 4)
-        
         st.write(final_results_df)
-       
-        
-       
         #st.write(specific_metrics)
         st.download_button(
             label="Export Final Results",
