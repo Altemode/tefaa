@@ -215,7 +215,7 @@ if url_list:
     pm, df = get_data()
 
     ####### ###### #####THESE BLOCK IS ONLY FOR CMJ TRIAL ####### ######### #######
-    if url_list[0]['type_of_trial'] == "CMJ":
+    if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
         # Find Take Off Time: 
         for i in range (0, len(df.index)):
             if df.loc[i,'Force'] < 2:
@@ -451,7 +451,7 @@ if url_list:
         st.plotly_chart(fig,use_container_width=True)
 
     ###### ##### ##### Calculate the times for periods for the CMJ Trial: ##### ###### ######
-    if url_list[0]['type_of_trial'] == 'CMJ':
+    if url_list[0]['type_of_trial'] == 'CMJ' or url_list[0]['type_of_trial'] == "SJ":
         st.caption("Helpfull information about the times of the graph after the start of the CMJ trial:")
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -498,7 +498,7 @@ if url_list:
     jump_depending_impluse = float("nan")
 
     # Find the Jump depending on time in Air and on Take Off Velocity for CMJ Trial:
-    if url_list[0]['type_of_trial'] == "CMJ":
+    if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
         #vertical_take_off_velocity = st.number_input("Give the time of vertical take off velocity")
         jump_depending_take_off_velocity = (df.loc[take_off_time, 'Velocity'] ** 2) / (2 * 9.81)
         jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
@@ -514,7 +514,7 @@ if url_list:
     if brushed_submitted:
         df_brushed = df[(df.index >= user_time_input_min_main_table) & (df.index <= user_time_input_max_main_table)]
 
-        if url_list[0]['type_of_trial'] == "CMJ":
+        if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
             ######### ######## ########## JUMP METHOD | ONLY FOR CMJ TRIAL ############ ########### ############
             #Find the Impluse GRF:
             df_brushed['Impulse_grf'] = df_brushed['Force'] * (1/1000)
@@ -638,7 +638,7 @@ if url_list:
                         if rms_3_iso:
                             rms_3_normalized = df_brushed["RMS_3"].mean() / rms_3_iso
                             st.write("RMS 1 Norm:", round(rms_3_normalized,4))          
-            if url_list[0]['type_of_trial'] == "CMJ":
+            if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
                 with col2:
                         st.write('Jump (Impluse):', round(jump_depending_impluse,4))
                         st.write('Jump (Take Off Velocity:', round(jump_depending_take_off_velocity,4))
