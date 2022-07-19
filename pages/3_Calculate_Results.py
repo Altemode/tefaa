@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 #Make the connection with Supabase - Database:
-@st.experimental_singleton
+#@st.experimental_singleton
 def init_connection():
     url = st.secrets["supabase_url"]
     key = st.secrets["supabase_key"]
@@ -36,7 +36,7 @@ url_list=[]
 with st.expander("From here you may display and calculate results from any entry of the database!", expanded=True):
     st.caption("Use the below search fields to filter the datatable!")
     #uploaded_file = st.file_uploader("Choose a file1")
-    @st.experimental_memo(ttl=300)
+    #@st.experimental_memo(ttl=300)
     def select_all_from_main_table():
         query=con.table("main_table").select("*").execute()
         return query
@@ -442,9 +442,11 @@ if url_list:
         if url_list[0]['type_of_trial'] == "SJ" or url_list[0]['type_of_trial'] == "DJ":
             st.write("The trial starts at:", start_try_time)
     with c2:
-        st.write(" Take Off Time is at:", take_off_time)
+        if url_list[0]['type_of_trial'] == 'CMJ' or url_list[0]['type_of_trial'] == 'SJ' or url_list[0]['type_of_trial'] == 'DJ':
+            st.write(" Take Off Time is at:", take_off_time)
     with c3:
-        st.write(" Landing Time is at:", landing_time)
+        if url_list[0]['type_of_trial'] == 'CMJ' or url_list[0]['type_of_trial'] == 'SJ' or url_list[0]['type_of_trial'] == 'DJ':
+            st.write(" Landing Time is at:", landing_time)
     
     ###### ###### ###### SELECT TIME PERIOD OF DATASET #### ###### ###### ######## #####
     col1, col2 = st.columns(2)
@@ -468,10 +470,10 @@ if url_list:
     jump_depending_impluse = float("nan")
 
     # Find the Jump depending on time in Air and on Take Off Velocity for CMJ & SJ Trial:
-    #if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
+    if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
         #vertical_take_off_velocity = st.number_input("Give the time of vertical take off velocity")
-    jump_depending_take_off_velocity = (df.loc[take_off_time, 'Velocity'] ** 2) / (2 * 9.81)
-    jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
+        jump_depending_take_off_velocity = (df.loc[take_off_time, 'Velocity'] ** 2) / (2 * 9.81)
+        jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
     
     # Find the Jump depending on time in Air for DJ Trial:
     if url_list[0]['type_of_trial'] == "DJ":

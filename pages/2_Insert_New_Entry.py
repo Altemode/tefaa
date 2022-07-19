@@ -44,7 +44,7 @@ st.title("Import Entry to Database!")
 
 
 #Create the Form to submit data to database:
-with st.form("Create a new entry"):
+with st.form("Create a new entry", clear_on_submit=False):
     fullname = st.text_input("Fullname")
     age = st.number_input("Age", value=0, step=1)
     height = st.number_input("Height in cm", value=0, step=1)
