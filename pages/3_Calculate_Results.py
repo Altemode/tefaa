@@ -32,16 +32,6 @@ con = init_connection()
 st.title("Calculate Results")
 
 
-# st.sidebar.info("""Some Usefull Tips:  
-# • initial stationary position (FGRF = BW)  
-# • unweighting phase (FGRF < BW)  
-# • propulsion phase (FGRF > BW)  
-# • instant of take-off (FGRF = 0 N)  
-# • flight phase (FGRF = 0 N)  
-# • instant of landing  
-# • the landing ‘impact’ force peak  
-# • final stationary position (FGRF = BW)""")
-
 url_list=[]
 with st.expander("From here you may display and calculate results from any entry of the database!", expanded=True):
     st.caption("Use the below search fields to filter the datatable!")
@@ -56,24 +46,16 @@ with st.expander("From here you may display and calculate results from any entry
     df_main_table = pd.DataFrame(query.data)
     if not df_main_table.empty:
         df_main_table.columns = ['ID', 'Created At', 'Fullname', 'Email', 'Occupy', 'Type of Trial', 'Filename', 'Filepath', 'Height', 'Weight', 'Age']
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3 = st.columns([3,2,2])
         with col3:
             type_of_trial_search = st.text_input("Type of Trial:")
-
-        with col5:
-            st.write("")
-
-        with col4:
-            st.write("")
-        
         with col2:
             occupy_search = st.text_input("Occupy:")
-            
         with col1:
             fullname_search = st.text_input("Fullname:")
             
 
-        if not occupy_search and not fullname_search:
+        if not occupy_search and not fullname_search and not type_of_trial_search:
             df_main_table
         
         elif fullname_search and not occupy_search and not type_of_trial_search:
@@ -141,38 +123,22 @@ def get_data():
         df['Start_Velocity'] = float("nan")
         df['Velocity'] = float("nan")
         df['Rows_Count'] = df.index
-
-        # Calculate the sum of all sensors Mass $ Weight
-        #df['Mass_Sum'] = (df['Mass_1'] + df['Mass_2'] + df['Mass_3'] + df['Mass_4'])
-        pm = df['Mass_Sum'].mean()
-
-        # Calculate The Column Force
-        df['Force'] = df['Mass_Sum'] * 9.81
-        # Calculate Acceleration
-        if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
-            df['Acceleration'] = (df['Force'] / pm) - 9.81
-            df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
-            df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
-            
-        if url_list[0]['type_of_trial'] == "DJ":
-            for i in range(len(df.index)):
-                if df.loc[i,'Force'] > 5:
-                    contact_time_1st = i
-                    break
-
-            for i in range(contact_time_1st,len(df.index)):
-                df.loc[i,'Acceleration'] = (df.loc[i,'Force'] / pm) - 9.81
-                # Calculate Velocity
-                df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
-                df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
-
-
         low_cutoff = 10 # Hz
         high_cutoff = 450 # Hz
         frequency = 1000
-        
+
+        #pm = df['Mass_Sum'].mean()
+
+        # Calculate The Column Force
+        df['Force'] = df['Mass_Sum'] * 9.81
+        # Calculate Acceleration, Velocity for CMJ and SJ Trials:
+        if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
+            df['Acceleration'] = (df['Force'] / url_list[0]['weight']) - 9.81
+            df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
+            df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
+
+        # THIS IS ALL FOR EMG TO RMS 1
         if 'Col_9' in df.columns:
-            # THIS IS ALL FOR EMG TO RMS 1
             # [Baseline Removal] Convert Raw Data EMG to EMG
             df['Col_9_to_converted'] = (((df['Col_9']/ 2 ** 16) - 1/2 ) * 3 ) / 1000
             df['Col_9_to_converted'] = df['Col_9_to_converted'] *1000
@@ -182,10 +148,9 @@ def get_data():
             df['pre_pro_signal_EMG_1'] = pre_pro_signal_1**2
             #This is RMS per 100
             df['RMS_1'] = df.pre_pro_signal_EMG_1.rolling(window=100,min_periods=100).mean()**(1/2)
-
-            
-        if 'Col_10' in df.columns:
-            # THIS IS ALL FOR EMG TO RMS 2
+        
+        # THIS IS ALL FOR EMG TO RMS 2
+        if 'Col_10' in df.columns: 
             df['Col_10_to_converted'] = (((df['Col_10']/ 2 ** 16) - 1/2 ) * 3 ) / 1000
             df['Col_10_to_converted'] = df['Col_10_to_converted'] *1000
             pre_pro_signal_2 = df['Col_10_to_converted'] - df["Col_10_to_converted"].mean()
@@ -206,16 +171,16 @@ def get_data():
             #This is RMS per 100
             df['RMS_3'] = df.pre_pro_signal_EMG_3.rolling(window=100,min_periods=100).mean()**(1/2)
         
-        return pm, df
+        return df
 
 
 ############################################################################################################                
 
 if url_list:
-    pm, df = get_data()
+    df = get_data()
 
-    ####### ###### #####THESE BLOCK IS ONLY FOR CMJ TRIAL ####### ######### #######
-    if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
+    ####### ###### ##### TIMES FOR CMJ TRIAL ####### ######### #######
+    if url_list[0]['type_of_trial'] == "CMJ":
         # Find Take Off Time: 
         for i in range (0, len(df.index)):
             if df.loc[i,'Force'] < 2:
@@ -233,9 +198,24 @@ if url_list:
                 break
         closest_to_zero_velocity = df.loc[start_try_time:take_off_time,'Velocity'].sub(0).abs().idxmin()
         closest_to_average_force_1st = (df.loc[start_try_time:closest_to_zero_velocity,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
-        #closest_to_average_force_2nd = (df.loc[closest_to_zero_velocity:take_off_time,'Force']-df['Force'].mean()).sub(0).abs().idxmin()
-    
-    ####### ###### #####THESE BLOCK IS ONLY FOR DJ TRIAL ####### ######### #######
+   
+    ####### ###### ##### TIMES FOR SJ TRIAL ####### ######### #######
+    if url_list[0]['type_of_trial'] == "SJ":
+        for i in range (0, len(df.index)):
+            if df.loc[i,'Force'] < 2:
+                take_off_time = i
+                break
+        # Find Landing Time:
+        for i in range (take_off_time, len(df.index)):
+            if df.loc[i,'Force'] > 55:
+                landing_time = i - 1
+                break
+        for i in range(0,take_off_time):
+            if df.loc[i,'Force'] > (df.loc[10,'Force'] + 10):
+                start_try_time = i
+                break
+
+    ####### ###### ##### TIMES FOR DJ TRIAL ####### ######### #######
     if url_list[0]['type_of_trial'] == "DJ":
         for i in range(len(df.index)):
             if df.loc[i,'Force'] > 3:
@@ -249,6 +229,9 @@ if url_list:
             if df.loc[i,'Force'] > 25:
                 landing_time = i
                 break
+        df.loc[contact_time_1st:len(df.index):1, 'Acceleration'] = (df.loc[contact_time_1st:len(df.index):1, 'Force'] / url_list[0]['weight']) - 9.81
+        df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
+        df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
     
     with st.expander(("Graph"), expanded=True):
         #### CREATE THE MAIN CHART #####
@@ -450,32 +433,24 @@ if url_list:
                         if trace.name in lines_to_hide else ())
         st.plotly_chart(fig,use_container_width=True)
 
-    ###### ##### ##### Calculate the times for periods for the CMJ Trial: ##### ###### ######
-    if url_list[0]['type_of_trial'] == 'CMJ' or url_list[0]['type_of_trial'] == "SJ":
-        st.caption("Helpfull information about the times of the graph after the start of the CMJ trial:")
-        c1, c2, c3 = st.columns(3)
-        with c1:
+    ###### ##### ##### DISPLAY Important Times of the graph: ##### ###### ######
+    st.caption("Helpfull information about the times of the graph after the starτ:")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if url_list[0]['type_of_trial'] == 'CMJ':
             st.write(" Velocity closest to zero is at:", closest_to_zero_velocity)
-        with c2:
-            st.write(" Take Off Time is at:", take_off_time)
-        with c3:
-            st.write(" Landing Time is at:", landing_time)
-    
-    ###### ##### ##### Calculate the times for periods for the DJ Trial: ##### ###### ######
-    if url_list[0]['type_of_trial'] == 'DJ':
-        st.caption("Helpfull information about the times of the graph after the start of the DJ trial:")
-        c1, c2, c3 = st.columns(3)
-        with c1:
+        if url_list[0]['type_of_trial'] == "SJ":
+            st.write("SJ trial starts at:", start_try_time)
+        if url_list[0]['type_of_trial'] == "DJ":
             st.write(" Contact phase is at:", contact_time_1st)
-        with c2:
-            st.write(" Take Off Time is at:", take_off_time)
-        with c3:
-            st.write(" Landing Time is at:", landing_time)
-
+    with c2:
+        st.write(" Take Off Time is at:", take_off_time)
+    with c3:
+        st.write(" Landing Time is at:", landing_time)
     
+    ###### ###### ###### SELECT TIME PERIOD OF DATASET #### ###### ###### ######## #####
     col1, col2 = st.columns(2)
     r=0  
-    
     with st.form("Select Graph Area", clear_on_submit=False):
         st.caption("Input these fields to calculate specific time period:")
         c1, c2, c3, c4, c5= st.columns(5)
@@ -489,12 +464,9 @@ if url_list:
             rms_2_iso = st.number_input("ISO RMS 2")
         with c5:
             rms_3_iso = st.number_input("ISO RMS 3")
-
         brushed_submitted = st.form_submit_button("Calculate results", help="this is hover")
     
-        
     df_brushed = df[(df.index >= user_time_input_min_main_table) & (df.index < user_time_input_max_main_table)]
-    
     jump_depending_impluse = float("nan")
 
     # Find the Jump depending on time in Air and on Take Off Velocity for CMJ Trial:
@@ -508,8 +480,6 @@ if url_list:
         jump_depending_time_in_air = (1 / 2) * 9.81 * (((landing_time - take_off_time) / 1000 ) / 2 ) ** 2 
         rsi = jump_depending_time_in_air / ((take_off_time - contact_time_1st) / 1000 )
 
-
-
     ######### ###### ######### ######## BRUSHED AREA ########### ########## ###########
     if brushed_submitted:
         df_brushed = df[(df.index >= user_time_input_min_main_table) & (df.index <= user_time_input_max_main_table)]
@@ -521,9 +491,9 @@ if url_list:
             impulse_grf = df_brushed['Impulse_grf'].sum()
             #Find the Impulse BW:
             impulse_bw_duration = (user_time_input_max_main_table - user_time_input_min_main_table) / 1000
-            impulse_bw = pm * 9.81 * impulse_bw_duration
+            impulse_bw = url_list[0]['weight'] * 9.81 * impulse_bw_duration
             # Find the Velocity depeding on Impulse:
-            velocity_momentum1 = (impulse_grf - impulse_bw) / pm
+            velocity_momentum1 = (impulse_grf - impulse_bw) / url_list[0]['weight']
             # Find the Jump:
             jump_depending_impluse = (velocity_momentum1 ** 2) / (9.81 * 2)
             rsi_duration = (take_off_time - start_try_time) / 1000
@@ -809,7 +779,7 @@ if url_list:
         st.write('**Name**:', url_list[0]['fullname'])
         st.write('**Age**:', url_list[0]['age'])
         st.write('**Height**:', url_list[0]['height'])
-        st.write('**Body mass is**:', round(pm,2), 'kg')
+        st.write('**Body mass is**:', round(url_list[0]['weight'],4), 'kg')
         st.write('**Type of try**:', url_list[0]['type_of_trial'])
         st.write('**File Name**:', url_list[0]['filename'])
         st.write('**Occupy:**', url_list[0]['occupy'])
