@@ -36,7 +36,7 @@ url_list=[]
 with st.expander("From here you may display and calculate results from any entry of the database!", expanded=True):
     st.caption("Use the below search fields to filter the datatable!")
     #uploaded_file = st.file_uploader("Choose a file1")
-    #@st.experimental_memo(ttl=600)
+    @st.experimental_memo(ttl=300)
     def select_all_from_main_table():
         query=con.table("main_table").select("*").execute()
         return query
