@@ -627,7 +627,7 @@ if url_list:
                     st.write('RMS_1-Mean:', round(df_brushed["RMS_1"].mean(),4))
                     st.write('RMS_2-Mean:', round(df_brushed['RMS_2'].mean(),4))
                     st.write('RMS_3-Mean:', round(df_brushed['RMS_3'].mean(),4))
-            if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "DJ":
+            if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "DJ" or url_list[0]['type_of_trial'] == "SJ":
                 with col4:
                         if rms_1_iso:
                             rms_1_normalized = df_brushed["RMS_1"].mean() / rms_1_iso
