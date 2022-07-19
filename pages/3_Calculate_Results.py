@@ -149,7 +149,7 @@ def get_data():
         # Calculate The Column Force
         df['Force'] = df['Mass_Sum'] * 9.81
         # Calculate Acceleration
-        if url_list[0]['type_of_trial'] == "CMJ":
+        if url_list[0]['type_of_trial'] == "CMJ" or url_list[0]['type_of_trial'] == "SJ":
             df['Acceleration'] = (df['Force'] / pm) - 9.81
             df['Start_Velocity'] = df.Acceleration.rolling(window=2,min_periods=1).mean()*0.001
             df['Velocity'] = df.Start_Velocity.rolling(window=999999,min_periods=1).sum()
