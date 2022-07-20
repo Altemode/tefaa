@@ -56,7 +56,7 @@ with st.expander("From here you may display and calculate results from any entry
             
 
         if not occupy_search and not fullname_search and not type_of_trial_search:
-            df_main_table
+            df_main_table[['ID', 'Created At', 'Fullname', 'Email', 'Occupy', 'Type of Trial', 'Filename', 'Height', 'Weight', 'Age']]
         
         elif fullname_search and not occupy_search and not type_of_trial_search:
             st.dataframe(df_main_table[df_main_table['Fullname']== fullname_search])
