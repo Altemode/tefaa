@@ -84,25 +84,27 @@ with st.expander("From here you may display and calculate results from any entry
 
         # In this form, you type the id of the person to calculate speicific trial.
         
-        with st.form("Type the ID of your link:",clear_on_submit=False):   
-            url_id_number_input = st.number_input("Type the ID of your prerferred trial and Press Calculate Results:",value = 0,step= 1)
-            id_submitted = st.form_submit_button("Calculate Results")
-        # Querry to find the data row of specific ID
-        if url_id_number_input:
-            def select_filepath_from_specific_id():
-                query=con.table("main_table").select("*").eq("id", url_id_number_input).execute()
-                return query
-            query = select_filepath_from_specific_id()  
-            # Make a list with all values from database depending on the condition. 
-            url_list =  query.data
-            # List with values depending on the querry
-            if url_list:
-                url = url_list[0]['filepath'].replace(" ", "%20")
-                st.write(url_list[0]['filepath'].replace(" ", "%20"))
-            else:
-                st.write("There is no entry with this ID")
+        
     else:
         st.write("There are no entries in the database! Please insert first!")
+
+with st.form("Type the ID of your link:",clear_on_submit=False):   
+    url_id_number_input = st.number_input("Type the ID of your prerferred trial and Press Calculate Results:",value = 0,step= 1)
+    id_submitted = st.form_submit_button("Calculate Results")
+    # Querry to find the data row of specific ID
+    if url_id_number_input:
+        def select_filepath_from_specific_id():
+            query=con.table("main_table").select("*").eq("id", url_id_number_input).execute()
+            return query
+        query = select_filepath_from_specific_id()  
+        # Make a list with all values from database depending on the condition. 
+        url_list =  query.data
+        # List with values depending on the querry
+        if url_list:
+            url = url_list[0]['filepath'].replace(" ", "%20")
+            st.write(url_list[0]['filepath'].replace(" ", "%20"))
+        else:
+            st.write("There is no entry with this ID")
 
 #@st.cache(allow_output_mutation=True)
 def get_data():
