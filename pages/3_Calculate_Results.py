@@ -84,11 +84,10 @@ with st.expander("From here you may display and calculate results from any entry
 
         # In this form, you type the id of the person to calculate speicific trial.
         
-        
     else:
         st.write("There are no entries in the database! Please insert first!")
 
-with st.form("Type the ID of your link:",clear_on_submit=False):   
+with st.sidebar.form("Type the ID of your link:", clear_on_submit=False):   
     url_id_number_input = st.number_input("Type the ID of your prerferred trial and Press Calculate Results:",value = 0,step= 1)
     id_submitted = st.form_submit_button("Calculate Results")
     # Querry to find the data row of specific ID
@@ -102,7 +101,7 @@ with st.form("Type the ID of your link:",clear_on_submit=False):
         # List with values depending on the querry
         if url_list:
             url = url_list[0]['filepath'].replace(" ", "%20")
-            st.write(url_list[0]['filepath'].replace(" ", "%20"))
+            st.write("Person ID:", url_list[0]['id'])
         else:
             st.write("There is no entry with this ID")
 
