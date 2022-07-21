@@ -6,6 +6,7 @@ from supabase import create_client, Client
 import ftplib
 import tempfile
 from pathlib import Path
+import numpy as np
 
 
 ############# ############## PAGE 2 INSERT TO DATABASE USER+TRIAL ############## ############ #############################
@@ -50,16 +51,15 @@ query = select_all_from_main_table()
 
 df_main_table = pd.DataFrame(query.data)
 df_main_table_unique_values = df_main_table.drop_duplicates(subset = ["fullname"])
-
 df_main_table_unique_values = df_main_table_unique_values.shift()
-df_main_table_unique_values.loc[0] = [float("Nan"), float("Nan"), '-', '-', '-', '-','-','-', float("Nan"), float("Nan"), float("Nan")]
-fullname_input = st.selectbox("Select a person from the database. " , (df_main_table_unique_values['fullname']))
+df_main_table_unique_values.loc[0] = [int, float("Nan"), '-', '-', '-', '-','-','-', float("Nan"), float("Nan"), 0]
+fullname_input = st.selectbox("Select a person from the database or fill in the fields below. " , (df_main_table_unique_values['fullname']))
 row_index = df_main_table_unique_values.index[df_main_table_unique_values['fullname']==fullname_input].tolist()
 
 #Create the Form to submit data to database:
 with st.form("Create a new entry", clear_on_submit=False):
     fullname = st.text_input("Fullname", value = df_main_table_unique_values.loc[row_index[0]]['fullname'])
-    age = st.number_input("Age", value = df_main_table_unique_values.loc[row_index[0]]['age'])
+    age = st.number_input("Age", value = int(df_main_table_unique_values.loc[row_index[0]]['age']), min_value=0, max_value=100, step=1)
     height = st.number_input("Height in cm", value = df_main_table_unique_values.loc[row_index[0]]['height'])
     weight = st.number_input("Weight in kg", value = df_main_table_unique_values.loc[row_index[0]]['weight'])
     email = st.text_input("Email address")
