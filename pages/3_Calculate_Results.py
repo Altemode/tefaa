@@ -30,6 +30,28 @@ def init_connection():
 con = init_connection()
 
 st.title("Calculate Results")
+with st.sidebar.expander("DELETE USER", expanded=False):
+    st.error("Warning this is pernament")
+    with st.form("delete user"):
+        id_to_delete = st.number_input("Type ID of user to delete", value=0, step=1)
+        
+        verify_delete_text_input = st.text_input("Type 'Delete' in the field above to procede")
+        id_to_delete_button = st.form_submit_button("Delete User")
+
+    if id_to_delete_button and verify_delete_text_input=="Delete":
+        def delete_entry_from_main_table(supabase):
+            query=con.table("main_table").delete().eq("id", id_to_delete).execute()
+            return query
+        query = delete_entry_from_main_table(con)
+        # Check if list query.data is empty or not
+        if query.data:
+            def main():
+                delete_entry = delete_entry_from_main_table(con)
+            main()
+            st.success('Thank you! This entry has been deleted from database!')
+        else:
+            st.warning("There is no entry with this id to delete!")
+
 
 
 url_list=[]
@@ -56,7 +78,7 @@ with st.expander("From here you may display and calculate results from any entry
             
 
         if not occupy_search and not fullname_search and not type_of_trial_search:
-            df_main_table[['ID', 'Created At', 'Fullname', 'Email', 'Occupy', 'Type of Trial', 'Filename', 'Height', 'Weight', 'Age']]
+            df_main_table[['ID', 'Created At', 'Fullname', 'Occupy', 'Type of Trial', 'Filename', 'Height', 'Weight', 'Age']]
         
         elif fullname_search and not occupy_search and not type_of_trial_search:
             st.dataframe(df_main_table[df_main_table['Fullname']== fullname_search])
@@ -104,6 +126,9 @@ with st.sidebar.form("Type the ID of your link:", clear_on_submit=False):
             st.write("Person ID:", url_list[0]['id'])
         else:
             st.write("There is no entry with this ID")
+st.write("ede0")
+
+
 
 #@st.cache(allow_output_mutation=True)
 def get_data():
