@@ -42,15 +42,28 @@ st.title("Import Entry to Database!")
 # #fil = pathlib.Path(filepath1.name)
 # filepath1.name
 
+def select_all_from_main_table():
+    query=con.table("main_table").select("*").execute()
+    return query
+query = select_all_from_main_table()
+
+
+df_main_table = pd.DataFrame(query.data)
+df_main_table_unique_values = df_main_table.drop_duplicates(subset = ["fullname"])
+
+df_main_table_unique_values = df_main_table_unique_values.shift()
+df_main_table_unique_values.loc[0] = [float("Nan"), float("Nan"), '-', '-', '-', '-','-','-', float("Nan"), float("Nan"), float("Nan")]
+fullname_input = st.selectbox("Select a person from the database. " , (df_main_table_unique_values['fullname']))
+row_index = df_main_table_unique_values.index[df_main_table_unique_values['fullname']==fullname_input].tolist()
 
 #Create the Form to submit data to database:
 with st.form("Create a new entry", clear_on_submit=False):
-    fullname = st.text_input("Fullname")
-    age = st.number_input("Age", value=0, step=1)
-    height = st.number_input("Height in cm", value=0, step=1)
-    weight = st.number_input("Weight in gr")
+    fullname = st.text_input("Fullname", value = df_main_table_unique_values.loc[row_index[0]]['fullname'])
+    age = st.number_input("Age", value = df_main_table_unique_values.loc[row_index[0]]['age'])
+    height = st.number_input("Height in cm", value = df_main_table_unique_values.loc[row_index[0]]['height'])
+    weight = st.number_input("Weight in kg", value = df_main_table_unique_values.loc[row_index[0]]['weight'])
     email = st.text_input("Email address")
-    occupy = st.text_input("Occupy")
+    occupy = st.text_input("Occupy", value = df_main_table_unique_values.loc[row_index[0]]['occupy'])
     type_of_trial = st.selectbox("Kind of Trial", ('-','CMJ', 'SJ','DJ','ISO' ))
     filepath = st.file_uploader("Choose a file", type="csv")
     #checkbox_val = st.checkbox("Form checkbox")
